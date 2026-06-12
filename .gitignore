@@ -4,3 +4,10 @@
 *.log
 .vscode/,.idea/
 *.tsbuildinfo
+/generated/prisma
+
+/generated/prisma
+
+/generated/prisma
+
+/generated/prisma
