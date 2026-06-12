@@ -12,3 +12,5 @@ export const prisma = new PrismaClient({
     adapter: adapter, // Restored the required adapter
     log: ['query', 'info', 'warn', 'error'], // Keeps the SQL logging active
 });
+
+
