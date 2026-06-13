@@ -11,13 +11,13 @@
   },
   "include": [
     "src/**/*",
-    "src/lib"
+    "lib"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "generated",
-    "src/lib",
+    "lib",
     "prisma.config.ts"
   ]
 }
