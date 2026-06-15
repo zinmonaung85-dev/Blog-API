@@ -10,11 +10,7 @@ export interface AuthenticatedRequest extends Request {
     user?: User;
 }
 
-export async function authMiddleware(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void | Response> {
+export async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void | Response> {
     try {
         const authorizationHeader = req.headers?.authorization;
         if (!authorizationHeader) {
