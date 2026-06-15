@@ -15,19 +15,6 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput): P
         throw new ApiError("Author not found", 400);
     }
 
-    const currentStatus = blogData.status || 'DRAFT';
-
-    if (currentStatus === "PUBLISHED") {
-        await prisma.blog.deleteMany({
-            where: {
-                authorId: authorId,
-                title: blogData.title,
-                content: blogData.content,
-                status: "DRAFT"
-            }
-        });
-    }
-
     const random4Digit = Math.floor(1000 + Math.random() * 9000);
     const slug = `${random4Digit}-${Date.now()}`;
 
@@ -45,3 +32,38 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput): P
 
     return newBlog;
 };
+
+
+export async function publishBlog(blogId: string, authorId: string): Promise<Blog> {
+
+    if (!authorId) {
+        throw new ApiError("Author not found", 400);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog not found", 404);
+    }
+
+    if (existingBlog.authorId !== authorId) {
+        throw new ApiError("You don't have permission to publish this blog", 403);
+    }
+
+    if (existingBlog.status === "PUBLISHED") {
+        throw new ApiError("This blog has already been published!!", 400);
+    }
+
+    const updatedBlog = await prisma.blog.update({
+        where: { id: blogId },
+        data: {
+            status: "PUBLISHED",
+            publishedAt: new Date(),
+        },
+    });
+
+    return updatedBlog;
+
+}
