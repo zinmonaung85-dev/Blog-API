@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { userRoute } from "./controller/user.route";
+import { BlogRoute } from "./controller/blog.route";
 
 //import { prisma } from "./lib/prisma";  //inserting with prisma
 
@@ -18,6 +19,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/users", userRoute);
+app.use("/blogs", BlogRoute);
 
 
 app.listen(Number(PORT), async () => {
@@ -36,7 +38,7 @@ app.listen(Number(PORT), async () => {
 //             data: {
 //                 firstname: "Dili",
 //                 lastname: "Reba",
-//                 email: "dilireba@example.com",
+//                 email: "dilireba@gmail.com",
 //                 password: "dilireba@26"
 //             }
 //         });
