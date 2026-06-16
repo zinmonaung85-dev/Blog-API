@@ -8,5 +8,6 @@ const router = Router();
 //blogs
 router.post("/create", authMiddleware, blogController.createBlog);
 router.patch("/publish/:id", authMiddleware, blogController.publishBlog);
+router.get("/list", authMiddleware, blogController.getBlogList);
 
 export { router as blogRoute };

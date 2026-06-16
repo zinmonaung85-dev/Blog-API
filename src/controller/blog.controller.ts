@@ -81,3 +81,35 @@ export async function publishBlog(req: AuthenticatedRequest, res: Response): Pro
         handleErrors(res, err);
     }
 }
+
+
+export async function getBlogList(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+
+    try {
+        const authorId = req.user?.id;
+
+        if (!authorId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
+
+        const page = Number(req.query.page) || 1;
+        const size = Number(req.query.size) || 10;
+
+        const result = await blogService.getBlogList(authorId, {
+            page,
+            size,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Blogs fetched successfully",
+            data: result,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}

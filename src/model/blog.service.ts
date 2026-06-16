@@ -1,6 +1,7 @@
 import { User, Blog } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
+import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
 
 
 import { prisma } from "../lib/prisma";
@@ -67,3 +68,52 @@ export async function publishBlog(blogId: string, authorId: string): Promise<Blo
     return updatedBlog;
 
 }
+
+
+interface BlogListResponse {
+    blogs: Blog[];
+    total: number;
+    page: number;
+    size: number;
+    totalPages: number;
+}
+
+export async function getBlogList(authorId: string, input: GetBlogListInput): Promise<BlogListResponse> {
+
+    if (!authorId) {
+        throw new ApiError("Author not found", 400);
+    }
+
+    const skip = (input.page - 1) * input.size;
+
+    const [blogs, totalBlogs] = await prisma.$transaction([
+        prisma.blog.findMany({
+            where: {
+                status: "PUBLISHED",
+            },
+            skip,
+            take: input.size,
+            orderBy: {
+                createdAt: "desc",
+            },
+        }),
+
+        prisma.blog.count({
+            where: {
+                status: "PUBLISHED",
+            },
+        }),
+    ]);
+
+    const totalPages = Math.ceil(totalBlogs / input.size);
+
+    return {
+        blogs,
+        total: totalBlogs,
+        page: input.page,
+        size: input.size,
+        totalPages,
+    };
+}
+
+
