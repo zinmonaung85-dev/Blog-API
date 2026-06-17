@@ -1,10 +1,11 @@
-import { Blog } from "@prisma/client";
+import { User, Blog } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
 import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
-
+import { UpdateBlogInput } from "../dtos/update-blog-api.dto";
 
 import { prisma } from "../lib/prisma";
+
 
 
 
@@ -12,7 +13,7 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
 
     console.log(authorId);
 
-    console.log("SERVICE COVER IMAGE =", coverImage);
+    console.log("Cover image =", coverImage);
 
     if (!authorId) {
         throw new ApiError("Author not found", 400);
@@ -117,4 +118,70 @@ export async function getBlogList(authorId: string, input: GetBlogListInput): Pr
         size: input.size,
         totalPages,
     };
+}
+
+
+
+export async function updateBlog(authorId: string, blogId: string, blogData: UpdateBlogInput): Promise<Blog> {
+
+    if (!authorId) {
+        throw new ApiError("Author not found", 400);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog not found", 404);
+    }
+
+    if (existingBlog.authorId !== authorId) {
+        throw new ApiError("You don't have permission to update this blog", 403);
+    }
+
+    const updatedBlog = await prisma.blog.update({
+        where: { id: blogId },
+        data: {
+            title: blogData.title ?? existingBlog.title,
+            content: blogData.content ?? existingBlog.content,
+            excerpt: blogData.excerpt ?? existingBlog.excerpt,
+
+        },
+    });
+
+    return updatedBlog;
+}
+
+
+export async function deleteBlog(authorId: string, blogId: string): Promise<Blog> {
+
+    if (!authorId) {
+        throw new ApiError("Author ID is required", 400);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog not found to delete", 404);
+    }
+
+    if (existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog has already been deleted", 400);
+    }
+
+    if (existingBlog.authorId !== authorId) {
+        throw new ApiError("You don't have permission to delete this blog", 403);
+    }
+
+    const deletedBlog = await prisma.blog.update({
+        where: { id: blogId },
+        data: {
+            deletedAt: new Date(),
+        },
+    });
+
+    return deletedBlog;
 }

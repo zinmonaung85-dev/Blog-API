@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { CreateBlogDto } from '../dtos/create-blog-api.dto';
 import * as blogService from "../model/blog.service";
 import { handleErrors } from "./handle-errors";
+import { UpdateBlogDto } from '../dtos/update-blog-api.dto';
 
 interface AuthenticatedRequest extends Request {
     params: {
@@ -112,6 +113,68 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
             success: true,
             message: "Blogs fetched successfully",
             data: result,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function updateBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+        const authorId = req.user?.id;
+        const blogId = req.params.id;
+
+        if (!authorId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized author!!!",
+            });
+        }
+
+        const body = req.body;
+        const input = UpdateBlogDto.parse(body);
+        console.log(input);
+
+        const updatedBlog = await blogService.updateBlog(authorId, blogId, input);
+
+        return res.status(200).json({
+            success: true,
+            updatedBlog: {
+                id: updatedBlog.id,
+                title: updatedBlog.title,
+                content: updatedBlog.content,
+                excerpt: updatedBlog.excerpt,
+            },
+            message: "Blog updated successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function deleteBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+        const blogId = req.params.id;
+        const authorId = req.user?.id;
+
+        if (!authorId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        const result = await blogService.deleteBlog(authorId, blogId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Blog post was successfully deleted.",
+            deletedAt: result.deletedAt,
         });
 
     } catch (err) {
