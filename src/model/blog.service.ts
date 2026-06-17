@@ -1,4 +1,4 @@
-import { User, Blog } from "@prisma/client";
+import { Blog } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
 import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
@@ -8,9 +8,11 @@ import { prisma } from "../lib/prisma";
 
 
 
-export async function createBlog(authorId: string, blogData: CreateBlogInput): Promise<Blog> {
+export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
 
     console.log(authorId);
+
+    console.log("SERVICE COVER IMAGE =", coverImage);
 
     if (!authorId) {
         throw new ApiError("Author not found", 400);
@@ -24,6 +26,7 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput): P
             title: blogData.title,
             content: blogData.content,
             excerpt: blogData.excerpt ?? null,
+            coverImage,
             status: blogData.status ?? 'DRAFT',
             slug: slug,
             authorId: authorId,
@@ -115,5 +118,3 @@ export async function getBlogList(authorId: string, input: GetBlogListInput): Pr
         totalPages,
     };
 }
-
-

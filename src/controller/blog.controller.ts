@@ -12,6 +12,7 @@ interface AuthenticatedRequest extends Request {
         email?: string;
     };
 }
+
 export async function createBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
     try {
         const body = req.body;
@@ -20,10 +21,7 @@ export async function createBlog(req: AuthenticatedRequest, res: Response): Prom
 
         console.log(input);
 
-        const authorId = req.user?.id;    //using operator chaining 
-
-        /* same with using ternary operator
-        const authorId = req.user ? req.user.id : undefined; */
+        const authorId = req.user?.id;
 
         if (!authorId) {
             return res.status(401).json({
@@ -32,17 +30,24 @@ export async function createBlog(req: AuthenticatedRequest, res: Response): Prom
             });
         }
 
-        const newBlog = await blogService.createBlog(authorId, input);
+        const file = req.file?.filename;
+
+        console.log(file);
+
+
+        const newBlog = await blogService.createBlog(authorId, input, file);
 
         return res.status(201).json({
+            success: true,
             blogInfo: {
+                id: newBlog.id,
                 title: newBlog.title,
                 content: newBlog.content,
                 excerpt: newBlog.excerpt,
+                coverImage: newBlog.coverImage,
                 status: newBlog.status,
             },
             message: "Blog created successfully!",
-
         });
     } catch (err) {
         handleErrors(res, err);
@@ -83,7 +88,7 @@ export async function publishBlog(req: AuthenticatedRequest, res: Response): Pro
 }
 
 
-export async function getBlogList(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export async function getBlogList(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
     try {
         const authorId = req.user?.id;
