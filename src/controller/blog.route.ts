@@ -8,7 +8,7 @@ const router = Router();
 //blogs
 router.post("/create", authMiddleware, uploadCoverImage, blogController.createBlog);
 router.patch("/publish/:id", authMiddleware, blogController.publishBlog);
-router.put("/update/:id", authMiddleware, blogController.updateBlog);
+router.put("/update/:id", authMiddleware, uploadCoverImage, blogController.updateBlog);
 router.delete("/delete/:id", authMiddleware, blogController.deleteBlog);
 
 router.get("/list", blogController.getBlogList);

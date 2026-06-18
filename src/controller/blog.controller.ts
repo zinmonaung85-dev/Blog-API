@@ -25,12 +25,12 @@ export async function createBlog(req: AuthenticatedRequest, res: Response): Prom
             });
         }
 
-        const file = req.file?.filename;
+        const coverImage = req.file?.filename;
 
-        console.log(file);
+        console.log(coverImage);
 
 
-        const newBlog = await blogService.createBlog(authorId, input, file);
+        const newBlog = await blogService.createBlog(authorId, input, coverImage);
 
         return res.status(201).json({
             success: true,
@@ -115,8 +115,11 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
 export async function updateBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
     try {
+
         const authorId = req.user?.id;
+
         const blogId = req.params.id;
+
 
         if (!authorId) {
             return res.status(401).json({
@@ -126,19 +129,20 @@ export async function updateBlog(req: AuthenticatedRequest, res: Response): Prom
         }
 
         const body = req.body;
+
         const input = UpdateBlogDto.parse(body);
+
         console.log(input);
 
-        const updatedBlog = await blogService.updateBlog(authorId, blogId as string, input);
+        const coverImage = req.file?.filename;
+
+        console.log(coverImage);
+
+        const updatedBlog = await blogService.updateBlog(authorId, blogId as string, input, coverImage);
 
         return res.status(200).json({
             success: true,
-            updatedBlog: {
-                id: updatedBlog.id,
-                title: updatedBlog.title,
-                content: updatedBlog.content,
-                excerpt: updatedBlog.excerpt,
-            },
+            data: updatedBlog,
             message: "Blog updated successfully!",
         });
     } catch (err) {
@@ -172,6 +176,7 @@ export async function deleteBlog(req: AuthenticatedRequest, res: Response): Prom
         handleErrors(res, err);
     }
 }
+
 
 export async function getBlogDetail(req: Request, res: Response): Promise<void | Response> {
     try {

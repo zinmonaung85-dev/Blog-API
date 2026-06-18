@@ -116,7 +116,7 @@ export async function getBlogList(authorId: string, input: GetBlogListInput) {
 
 
 
-export async function updateBlog(authorId: string, blogId: string, blogData: UpdateBlogInput): Promise<Blog> {
+export async function updateBlog(authorId: string, blogId: string, blogData: UpdateBlogInput, coverImage?: string): Promise<Blog> {
 
     if (!authorId) {
         throw new ApiError("Author not found", 400);
@@ -144,6 +144,7 @@ export async function updateBlog(authorId: string, blogId: string, blogData: Upd
             title: blogData.title ?? existingBlog.title,
             content: blogData.content ?? existingBlog.content,
             excerpt: blogData.excerpt ?? existingBlog.excerpt,
+            coverImage: coverImage ?? existingBlog.coverImage,
 
         },
     });
