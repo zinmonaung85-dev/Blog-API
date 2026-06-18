@@ -50,9 +50,11 @@ export async function login(req: Request, res: Response): Promise<void | Respons
 export async function refreshAccessToken(req: Request, res: Response): Promise<void | Response> {
 
     try {
-        const { refreshToken } = req.body;
+        const body = req.body;
 
-        const token = await userService.refreshAccessToken(refreshToken);
+        const input = RefreshAccessTokenDto.parse(body);
+
+        const token = await userService.refreshAccessToken(input.refreshToken);
 
         return res.status(200).json({
             data: token,

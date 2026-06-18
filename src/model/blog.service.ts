@@ -1,4 +1,4 @@
-import { User, Blog } from "@prisma/client";
+import { Blog } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
 import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
@@ -74,26 +74,19 @@ export async function publishBlog(blogId: string, authorId: string): Promise<Blo
 }
 
 
-interface BlogListResponse {
-    blogs: Blog[];
-    total: number;
-    page: number;
-    size: number;
-    totalPages: number;
-}
+export async function getBlogList(authorId: string, input: GetBlogListInput) {
 
-export async function getBlogList(authorId: string, input: GetBlogListInput): Promise<BlogListResponse> {
-
-    if (!authorId) {
-        throw new ApiError("Author not found", 400);
-    }
 
     const skip = (input.page - 1) * input.size;
 
-    const [blogs, totalBlogs] = await prisma.$transaction([
+    const [blogs, totalBlogs] = await Promise.all([
         prisma.blog.findMany({
             where: {
                 status: "PUBLISHED",
+                deletedAt: null,
+                authorId: {
+                    not: authorId,
+                }
             },
             skip,
             take: input.size,
@@ -105,6 +98,7 @@ export async function getBlogList(authorId: string, input: GetBlogListInput): Pr
         prisma.blog.count({
             where: {
                 status: "PUBLISHED",
+                deletedAt: null,
             },
         }),
     ]);
@@ -138,6 +132,10 @@ export async function updateBlog(authorId: string, blogId: string, blogData: Upd
 
     if (existingBlog.authorId !== authorId) {
         throw new ApiError("You don't have permission to update this blog", 403);
+    }
+
+    if (existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog cannot be updated", 400);
     }
 
     const updatedBlog = await prisma.blog.update({
@@ -184,4 +182,32 @@ export async function deleteBlog(authorId: string, blogId: string): Promise<Blog
     });
 
     return deletedBlog;
+}
+
+
+export async function getBlogDetail(blogId: string): Promise<Blog> {
+
+    const blog = await prisma.blog.findFirst({
+        where: {
+            id: blogId,
+            status: "PUBLISHED",
+            deletedAt: null,
+        },
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                }
+            }
+        }
+    });
+
+    if (!blog) {
+        throw new ApiError("Blog not found", 404);
+    }
+
+    return blog;
 }

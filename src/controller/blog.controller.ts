@@ -1,18 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { CreateBlogDto } from '../dtos/create-blog-api.dto';
+import { GetBlogListDto } from '../dtos/get-blog-list-api.dto';
 import * as blogService from "../model/blog.service";
 import { handleErrors } from "./handle-errors";
 import { UpdateBlogDto } from '../dtos/update-blog-api.dto';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
-interface AuthenticatedRequest extends Request {
-    params: {
-        id: string;
-    };
-    user?: {
-        id: string;
-        email?: string;
-    };
-}
+
 
 export async function createBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
     try {
@@ -71,7 +65,14 @@ export async function publishBlog(req: AuthenticatedRequest, res: Response): Pro
             });
         }
 
-        const updatedBlog = await blogService.publishBlog(blogId, authorId);
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "BlogId is requried!!!",
+            });
+        }
+
+        const updatedBlog = await blogService.publishBlog(blogId as string, authorId);
 
         return res.status(200).json({
             updatedBlog: {
@@ -92,22 +93,13 @@ export async function publishBlog(req: AuthenticatedRequest, res: Response): Pro
 export async function getBlogList(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
     try {
+
         const authorId = req.user?.id;
 
-        if (!authorId) {
-            return res.status(401).json({
-                success: false,
-                message: "Unauthorized",
-            });
-        }
+        const body = req.body;
+        const input = GetBlogListDto.parse(body);
 
-        const page = Number(req.query.page) || 1;
-        const size = Number(req.query.size) || 10;
-
-        const result = await blogService.getBlogList(authorId, {
-            page,
-            size,
-        });
+        const result = await blogService.getBlogList(authorId as string, input);
 
         return res.status(200).json({
             success: true,
@@ -119,7 +111,6 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
         handleErrors(res, err);
     }
 }
-
 
 export async function updateBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
@@ -138,7 +129,7 @@ export async function updateBlog(req: AuthenticatedRequest, res: Response): Prom
         const input = UpdateBlogDto.parse(body);
         console.log(input);
 
-        const updatedBlog = await blogService.updateBlog(authorId, blogId, input);
+        const updatedBlog = await blogService.updateBlog(authorId, blogId as string, input);
 
         return res.status(200).json({
             success: true,
@@ -169,12 +160,30 @@ export async function deleteBlog(req: AuthenticatedRequest, res: Response): Prom
             });
         }
 
-        const result = await blogService.deleteBlog(authorId, blogId);
+        const result = await blogService.deleteBlog(authorId, blogId as string);
 
         return res.status(200).json({
             success: true,
             message: "Blog post was successfully deleted.",
             deletedAt: result.deletedAt,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+export async function getBlogDetail(req: Request, res: Response): Promise<void | Response> {
+    try {
+
+        const blogId = req.params.id;
+
+        const blogDetail = await blogService.getBlogDetail(blogId as string);
+
+        return res.status(200).json({
+            success: true,
+            message: "Blog detail fetched successfully",
+            data: blogDetail,
         });
 
     } catch (err) {
