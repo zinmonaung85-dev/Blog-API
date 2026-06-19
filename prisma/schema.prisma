@@ -20,8 +20,9 @@ model User {
   password  String
 
   blogs     Blog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  favorites Favorite[]
 }
 
 model Blog {
@@ -38,7 +39,24 @@ model Blog {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
+  favorites   Favorite[]
 
   @@index([authorId])
   @@index([status])
+}
+
+model Favorite {
+  id String @id @default(cuid())
+
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id])
+  blog Blog @relation(fields: [blogId], references: [id])
+
+  savedAt DateTime @default(now())
+
+  @@unique([userId, blogId])
+  @@index([userId])
+  @@index([blogId])
 }
