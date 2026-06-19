@@ -1,4 +1,5 @@
 import { Blog } from "@prisma/client";
+import { Favorite } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
 import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
@@ -212,3 +213,143 @@ export async function getBlogDetail(blogId: string): Promise<Blog> {
 
     return blog;
 }
+
+
+export async function saveBlog(userId: string, blogId: string): Promise<Favorite> {
+
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog not found to save", 404);
+    }
+
+    if (existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog cannot be saved", 404);
+    }
+
+    const alreadySavedBlog = await prisma.favorite.findUnique({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    if (alreadySavedBlog) {
+        throw new ApiError("Blog has already been saved", 400);
+    }
+
+    const savedBlog = await prisma.favorite.create({
+        data: {
+            userId: userId,
+            blogId: blogId,
+        },
+    });
+
+    return savedBlog;
+
+}
+
+
+export async function unsaveBlog(userId: string, blogId: string): Promise<Favorite> {
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog not found to unsave", 404);
+    }
+
+    const alreadySavedBlog = await prisma.favorite.findUnique({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    if (!alreadySavedBlog) {
+        throw new ApiError("Blog cannot be able to unsave this blog cuz it is not saved yet!", 400);
+    }
+
+    const unsavedBlog = await prisma.favorite.delete({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    return unsavedBlog;
+
+}
+
+
+export async function getSavedBlogList(userId: string, input: GetBlogListInput) {
+
+    const skip = (input.page - 1) * input.size;
+
+    if (!userId) {
+        throw new ApiError("User not found", 400);
+    }
+
+    const [favorites, totalBlogs] = await Promise.all([
+        prisma.favorite.findMany({
+            where: {
+                userId: userId,
+            },
+            skip: skip,
+            take: input.size,
+            orderBy: {
+                savedAt: "desc",
+            },
+            include: {
+                blog: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                firstname: true,
+                                lastname: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
+        }),
+
+        prisma.favorite.count({
+            where: {
+                userId: userId,
+            },
+        }),
+    ]);
+
+    const blogs = favorites.map(fav => fav.blog);
+
+    return {
+        blogs,
+        total: totalBlogs,
+        page: input.page,
+        size: input.size,
+        totalPages: Math.ceil(totalBlogs / input.size),
+    };
+}
+
+

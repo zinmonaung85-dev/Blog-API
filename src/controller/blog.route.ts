@@ -14,4 +14,9 @@ router.delete("/delete/:id", authMiddleware, blogController.deleteBlog);
 router.get("/list", blogController.getBlogList);
 router.get("/detail/:id", blogController.getBlogDetail);
 
+router.post("/save/:id", authMiddleware, blogController.saveBlog);
+router.delete("/unsave/:id", authMiddleware, blogController.unsaveBlog);
+router.get("/savedList", authMiddleware, blogController.getSavedBlogList);
+
+
 export { router as blogRoute };

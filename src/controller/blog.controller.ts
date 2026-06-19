@@ -155,6 +155,7 @@ export async function deleteBlog(req: AuthenticatedRequest, res: Response): Prom
 
     try {
         const blogId = req.params.id;
+
         const authorId = req.user?.id;
 
         if (!authorId) {
@@ -189,6 +190,99 @@ export async function getBlogDetail(req: Request, res: Response): Promise<void |
             success: true,
             message: "Blog detail fetched successfully",
             data: blogDetail,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+export async function saveBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const blogId = req.params.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog not found to save!.",
+            });
+        }
+
+        const savedBlog = await blogService.saveBlog(userId, blogId as string);
+
+        return res.status(201).json({
+            message: "Blog saved successfully!!!",
+            data: savedBlog,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function unsaveBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const blogId = req.params.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog not found to unsave!.",
+            });
+        }
+
+        const unsavedBlog = await blogService.unsaveBlog(userId, blogId as string);
+
+        return res.status(201).json({
+            message: "Blog unsaved successfully!!!",
+            data: unsavedBlog,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function getSavedBlogList(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const body = req.body;
+
+        const input = GetBlogListDto.parse(body);
+
+        const result = await blogService.getSavedBlogList(userId as string, input);
+
+        return res.status(200).json({
+            success: true,
+            message: "Saved blogs fetched successfully",
+            data: result,
         });
 
     } catch (err) {
