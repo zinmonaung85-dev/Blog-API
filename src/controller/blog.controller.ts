@@ -42,7 +42,7 @@ export async function createBlog(req: AuthenticatedRequest, res: Response): Prom
                 coverImage: newBlog.coverImage,
                 status: newBlog.status,
             },
-            message: "Blog created successfully!",
+            message: "Blog post created successfully!",
         });
     } catch (err) {
         handleErrors(res, err);
@@ -81,7 +81,7 @@ export async function publishBlog(req: AuthenticatedRequest, res: Response): Pro
                 excerpt: updatedBlog.excerpt,
                 status: updatedBlog.status,
             },
-            message: "Blog published successfully!",
+            message: "Blog post published successfully!",
 
         });
     } catch (err) {
@@ -103,7 +103,7 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
 
         return res.status(200).json({
             success: true,
-            message: "Blogs fetched successfully",
+            message: "Blog posts fetched successfully",
             data: result,
         });
 
@@ -143,7 +143,7 @@ export async function updateBlog(req: AuthenticatedRequest, res: Response): Prom
         return res.status(200).json({
             success: true,
             data: updatedBlog,
-            message: "Blog updated successfully!",
+            message: "Blog post updated successfully!",
         });
     } catch (err) {
         handleErrors(res, err);
@@ -188,7 +188,7 @@ export async function getBlogDetail(req: Request, res: Response): Promise<void |
 
         return res.status(200).json({
             success: true,
-            message: "Blog detail fetched successfully",
+            message: "Blog post detail fetched successfully",
             data: blogDetail,
         });
 
@@ -215,14 +215,14 @@ export async function saveBlog(req: AuthenticatedRequest, res: Response): Promis
         if (!blogId) {
             return res.status(401).json({
                 success: false,
-                message: "Blog not found to save!.",
+                message: "Blog post not found to save!.",
             });
         }
 
         const savedBlog = await blogService.saveBlog(userId, blogId as string);
 
         return res.status(201).json({
-            message: "Blog saved successfully!!!",
+            message: "Blog post saved successfully!!!",
             data: savedBlog,
         });
 
@@ -250,14 +250,14 @@ export async function unsaveBlog(req: AuthenticatedRequest, res: Response): Prom
         if (!blogId) {
             return res.status(401).json({
                 success: false,
-                message: "Blog not found to unsave!.",
+                message: "Blog post not found to unsave!.",
             });
         }
 
         const unsavedBlog = await blogService.unsaveBlog(userId, blogId as string);
 
         return res.status(201).json({
-            message: "Blog unsaved successfully!!!",
+            message: "Blog post unsaved successfully!!!",
             data: unsavedBlog,
         });
 
@@ -281,7 +281,7 @@ export async function getSavedBlogList(req: AuthenticatedRequest, res: Response)
 
         return res.status(200).json({
             success: true,
-            message: "Saved blogs fetched successfully",
+            message: "Saved blog posts fetched successfully",
             data: result,
         });
 
@@ -289,3 +289,73 @@ export async function getSavedBlogList(req: AuthenticatedRequest, res: Response)
         handleErrors(res, err);
     }
 }
+
+
+export async function likeBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const blogId = req.params.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog post not found to like!.",
+            });
+        }
+
+        const likedBlog = await blogService.likeBlog(userId, blogId as string);
+
+        return res.status(201).json({
+            message: "Blog post liked successfully!!!",
+            data: likedBlog,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+export async function unlikeBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const blogId = req.params.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog post not found to unlike!.",
+            });
+        }
+
+        const unlikedBlog = await blogService.unlikeBlog(userId, blogId as string);
+
+        return res.status(201).json({
+            message: "Blog post unliked successfully!!!",
+            data: unlikedBlog,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+

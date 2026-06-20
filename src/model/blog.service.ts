@@ -1,4 +1,4 @@
-import { Blog } from "@prisma/client";
+import { Blog, Like } from "@prisma/client";
 import { Favorite } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
@@ -270,7 +270,7 @@ export async function unsaveBlog(userId: string, blogId: string): Promise<Favori
     });
 
     if (!existingBlog) {
-        throw new ApiError("Blog not found to unsave", 404);
+        throw new ApiError("Blog post not found to unsave", 404);
     }
 
     const alreadySavedBlog = await prisma.favorite.findUnique({
@@ -283,7 +283,7 @@ export async function unsaveBlog(userId: string, blogId: string): Promise<Favori
     });
 
     if (!alreadySavedBlog) {
-        throw new ApiError("Blog cannot be able to unsave this blog cuz it is not saved yet!", 400);
+        throw new ApiError("User cannot be able to unsave this blog post cuz it is not saved yet!", 400);
     }
 
     const unsavedBlog = await prisma.favorite.delete({
@@ -351,5 +351,92 @@ export async function getSavedBlogList(userId: string, input: GetBlogListInput) 
         totalPages: Math.ceil(totalBlogs / input.size),
     };
 }
+
+
+export async function likeBlog(userId: string, blogId: string): Promise<Like> {
+
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog post not found to like", 404);
+    }
+
+    if (existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog post cannot be given like", 404);
+    }
+
+    const alreadyLikedBlog = await prisma.like.findUnique({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    if (alreadyLikedBlog) {
+        throw new ApiError("Blog post has already been liked", 400);
+    }
+
+    const likedBlog = await prisma.like.create({
+        data: {
+            userId: userId,
+            blogId: blogId,
+        },
+    });
+
+    return likedBlog;
+
+}
+
+
+export async function unlikeBlog(userId: string, blogId: string): Promise<Like> {
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog post not found to unlike", 404);
+    }
+
+    const alreadyLikedBlog = await prisma.like.findUnique({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    if (!alreadyLikedBlog) {
+        throw new ApiError("User cannot be able to unlike this blog post cuz it is not liked yet!", 400);
+    }
+
+    const unlikedBlog = await prisma.like.delete({
+        where: {
+            userId_blogId: {
+                userId: userId,
+                blogId: blogId,
+            }
+        }
+    });
+
+    return unlikedBlog;
+
+}
+
+
 
 
