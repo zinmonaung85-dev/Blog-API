@@ -23,6 +23,7 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   favorites Favorite[]
+  likes     Like[]
 }
 
 model Blog {
@@ -40,6 +41,7 @@ model Blog {
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
   favorites   Favorite[]
+  likes       Like[]
 
   @@index([authorId])
   @@index([status])
@@ -55,6 +57,22 @@ model Favorite {
   blog Blog @relation(fields: [blogId], references: [id])
 
   savedAt DateTime @default(now())
+
+  @@unique([userId, blogId])
+  @@index([userId])
+  @@index([blogId])
+}
+
+model Like {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id])
+
+  createdAt DateTime @default(now())
 
   @@unique([userId, blogId])
   @@index([userId])
