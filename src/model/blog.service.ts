@@ -89,6 +89,13 @@ export async function getBlogList(authorId: string, input: GetBlogListInput) {
                     not: authorId,
                 }
             },
+
+            include: {
+                _count: {
+                    select: { likes: true }
+                },
+            },
+
             skip,
             take: input.size,
             orderBy: {
@@ -100,14 +107,22 @@ export async function getBlogList(authorId: string, input: GetBlogListInput) {
             where: {
                 status: "PUBLISHED",
                 deletedAt: null,
+                authorId: {
+                    not: authorId,
+                }
             },
         }),
     ]);
 
+    const formattedBlogs = blogs.map((blog) => ({
+        ...blog,
+        likeCount: blog._count.likes,
+    }));
+
     const totalPages = Math.ceil(totalBlogs / input.size);
 
     return {
-        blogs,
+        blogs: formattedBlogs,
         total: totalBlogs,
         page: input.page,
         size: input.size,
@@ -187,7 +202,7 @@ export async function deleteBlog(authorId: string, blogId: string): Promise<Blog
 }
 
 
-export async function getBlogDetail(blogId: string): Promise<Blog> {
+export async function getBlogDetail(blogId: string) {
 
     const blog = await prisma.blog.findFirst({
         where: {
@@ -202,18 +217,26 @@ export async function getBlogDetail(blogId: string): Promise<Blog> {
                     firstname: true,
                     lastname: true,
                     email: true,
-                }
-            }
-        }
+                },
+            },
+
+            _count: {
+                select: {
+                    likes: true,
+                },
+            },
+        },
     });
 
     if (!blog) {
         throw new ApiError("Blog not found", 404);
     }
 
-    return blog;
+    return {
+        ...blog,
+        likeCount: blog._count.likes,
+    };
 }
-
 
 export async function saveBlog(userId: string, blogId: string): Promise<Favorite> {
 
