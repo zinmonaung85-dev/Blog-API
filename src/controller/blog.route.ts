@@ -23,6 +23,6 @@ router.delete("/unlike/:id", authMiddleware, blogController.unlikeBlog);
 
 router.post("/comment", authMiddleware, blogController.createComment);
 router.post("/reply", authMiddleware, blogController.createReply);
-
+router.get("/commentsList/:id", blogController.commentsList);
 
 export { router as blogRoute };

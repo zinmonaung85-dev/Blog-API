@@ -434,6 +434,30 @@ export async function createReply(req: AuthenticatedRequest, res: Response): Pro
 }
 
 
+export async function commentsList(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+
+        const blogId = req.params.id;
+
+        const body = req.body;
+
+        const input = GetBlogListDto.parse(body);
+
+        const result = await blogService.commentsList(blogId as string, input);
+
+        return res.status(200).json({
+            success: true,
+            message: "Comments list fetched successfully",
+            data: result,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
 
 
 

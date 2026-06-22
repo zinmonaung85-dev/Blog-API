@@ -525,10 +525,58 @@ export async function createReply(userId: string, input: CreateReplyInput): Prom
     return newReply;
 }
 
+export async function commentsList(blogId: string, input: GetBlogListInput) {
 
+    const skip = (input.page - 1) * input.size;
 
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
 
+    if (!existingBlog) {
+        throw new ApiError("Blog post not found", 404);
+    }
 
+    const [comments, totalComments] = await Promise.all([
+        prisma.comment.findMany({
+            where: {
+                blogId: blogId,
+            },
+            skip: skip,
+            take: input.size,
+            orderBy: {
+                createdAt: "desc",
+            },
+            select: {
+                id: true,
+                content: true,
+                user: {
+                    select: {
+                        id: true,
+                        firstname: true,
+                        lastname: true,
+                    }
+                },
+                _count: {
+                    select: {
+                        replies: true
+                    }
+                }
+            }
+        }),
 
+        prisma.comment.count({
+            where: {
+                blogId: blogId,
+            },
+        }),
+    ]);
 
-
+    return {
+        comments,
+        total: totalComments,
+        page: input.page,
+        size: input.size,
+        totalPages: Math.ceil(totalComments / input.size),
+    };
+}
