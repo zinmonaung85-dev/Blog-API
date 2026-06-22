@@ -24,6 +24,8 @@ model User {
   updatedAt DateTime   @updatedAt
   favorites Favorite[]
   likes     Like[]
+  comments  Comment[]
+  replies   Reply[]
 }
 
 model Blog {
@@ -42,6 +44,7 @@ model Blog {
   deletedAt   DateTime?
   favorites   Favorite[]
   likes       Like[]
+  comments    Comment[]
 
   @@index([authorId])
   @@index([status])
@@ -77,4 +80,41 @@ model Like {
   @@unique([userId, blogId])
   @@index([userId])
   @@index([blogId])
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String @db.Text
+
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id])
+  blog Blog @relation(fields: [blogId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  replies   Reply[]
+
+  @@index([userId])
+  @@index([blogId])
+}
+
+model Reply {
+  id      String @id @default(cuid())
+  content String @db.Text
+
+  userId    String
+  commentId String
+
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([commentId])
 }
