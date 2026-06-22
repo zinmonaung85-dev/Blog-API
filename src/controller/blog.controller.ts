@@ -5,6 +5,8 @@ import * as blogService from "../model/blog.service";
 import { handleErrors } from "./handle-errors";
 import { UpdateBlogDto } from '../dtos/update-blog-api.dto';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { CreateCommentDto } from '../dtos/create-comment-api.dto';
+import { CreateReplyDto } from '../dtos/create-reply-api.dto';
 
 
 
@@ -358,4 +360,85 @@ export async function unlikeBlog(req: AuthenticatedRequest, res: Response): Prom
         handleErrors(res, err);
     }
 }
+
+
+export async function createComment(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+    try {
+        const body = req.body;
+
+        const input = CreateCommentDto.parse(body);
+
+        console.log(input);
+
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized! User ID not found in request.",
+            });
+        }
+
+        const newComment = await blogService.createComment(userId, input);
+
+        return res.status(201).json({
+            success: true,
+            commentInfo: {
+                id: newComment.id,
+                content: newComment.content,
+                blogId: newComment.blogId,
+                createdAt: newComment.createdAt
+            },
+            message: "Comment on blog post created successfully!",
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function createReply(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+    try {
+        const body = req.body;
+
+        const input = CreateReplyDto.parse(body);
+
+        console.log(input);
+
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized! User ID not found in request.",
+            });
+        }
+
+        const newReply = await blogService.createReply(userId, input);
+
+        return res.status(201).json({
+            success: true,
+            replyInfo: {
+                id: newReply.id,
+                content: newReply.content,
+                commentId: newReply.commentId,
+                createdAt: newReply.createdAt
+            },
+            message: "Reply on comment of blog post created successfully!",
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+
+
+
+
+
+
+
 

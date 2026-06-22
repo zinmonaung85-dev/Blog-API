@@ -1,9 +1,11 @@
-import { Blog, Like } from "@prisma/client";
+import { Blog, Like, Comment, Reply } from "@prisma/client";
 import { Favorite } from "@prisma/client";
 import { ApiError } from "../controller/api-error";
 import { CreateBlogInput } from "../dtos/create-blog-api.dto";
 import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
 import { UpdateBlogInput } from "../dtos/update-blog-api.dto";
+import { CreateCommentInput } from "../dtos/create-comment-api.dto";
+import { CreateReplyInput } from "../dtos/create-reply-api.dto";
 
 import { prisma } from "../lib/prisma";
 
@@ -459,6 +461,73 @@ export async function unlikeBlog(userId: string, blogId: string): Promise<Like> 
     return unlikedBlog;
 
 }
+
+
+export async function createComment(userId: string, input: CreateCommentInput): Promise<Comment> {
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: input.blogId },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog post not found to comment", 404);
+    }
+
+    if (existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Cannot comment on this blog post", 404);
+    }
+
+    const newComment = await prisma.comment.create({
+        data: {
+            userId: userId,
+            blogId: input.blogId,
+            content: input.content,
+        },
+    });
+
+    return newComment;
+}
+
+
+export async function createReply(userId: string, input: CreateReplyInput): Promise<Reply> {
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingComment = await prisma.comment.findUnique({
+        where: { id: input.commentId },
+        include: {
+            blog: true,
+        },
+    });
+
+    if (!existingComment) {
+        throw new ApiError("Comment not found to reply", 404);
+    }
+
+    if (existingComment.blog.status !== "PUBLISHED" || existingComment.blog.deletedAt !== null) {
+        throw new ApiError("Cannot reply to this comment as the blog post is unavailable", 400);
+    }
+
+    const newReply = await prisma.reply.create({
+        data: {
+            userId: userId,
+            commentId: input.commentId,
+            content: input.content,
+        },
+    });
+
+    return newReply;
+}
+
+
+
+
 
 
 

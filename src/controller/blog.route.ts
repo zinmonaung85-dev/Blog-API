@@ -21,5 +21,8 @@ router.get("/savedList", authMiddleware, blogController.getSavedBlogList);
 router.post("/like/:id", authMiddleware, blogController.likeBlog);
 router.delete("/unlike/:id", authMiddleware, blogController.unlikeBlog);
 
+router.post("/comment", authMiddleware, blogController.createComment);
+router.post("/reply", authMiddleware, blogController.createReply);
+
 
 export { router as blogRoute };
