@@ -533,8 +533,8 @@ export async function commentsList(blogId: string, input: GetBlogListInput) {
         where: { id: blogId },
     });
 
-    if (!existingBlog) {
-        throw new ApiError("Blog post not found", 404);
+    if (!existingBlog || existingBlog.deletedAt !== null || existingBlog.status !== "PUBLISHED") {
+        throw new ApiError("Blog post is unavailable", 404);
     }
 
     const [comments, totalComments] = await Promise.all([
@@ -560,7 +560,9 @@ export async function commentsList(blogId: string, input: GetBlogListInput) {
                 },
                 _count: {
                     select: {
-                        replies: true
+                        replies: {
+                            where: { deletedAt: null }
+                        }
                     }
                 }
             }
@@ -603,6 +605,10 @@ export async function replyList(blogId: string, commentId: string, input: GetBlo
 
     if (existingComment.blog.status !== "PUBLISHED" || existingComment.blog.deletedAt !== null) {
         throw new ApiError("Cannot view replies as the blog post is unavailable", 400);
+    }
+
+    if (existingComment.deletedAt !== null) {
+        throw new ApiError("Comment not found", 404);
     }
 
     const [replies, totalReplies] = await Promise.all([
