@@ -519,7 +519,28 @@ export async function viewBlog(req: AuthenticatedRequest, res: Response): Promis
     }
 }
 
+export async function ownBlogList(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
+    try {
+
+        const authorId = req.user?.id;
+
+        const body = req.body;
+
+        const input = GetBlogListDto.parse(body);
+
+        const result = await blogService.ownBlogList(authorId as string, input);
+
+        return res.status(200).json({
+            success: true,
+            message: "Blog posts fetched successfully",
+            data: result,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
 
 
 

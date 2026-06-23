@@ -27,5 +27,6 @@ router.get("/:id/comments", blogController.commentsList);
 router.get("/:id/comments/:commentId", blogController.replyList);
 
 router.post("/:id", authMiddleware, blogController.viewBlog);
+router.get("/own", authMiddleware, blogController.ownBlogList);
 
 export { router as blogRoute };

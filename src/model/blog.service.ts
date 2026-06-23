@@ -686,3 +686,53 @@ export async function viewBlog(blogId: string, userId: string) {
 
     return views;
 }
+
+
+export async function ownBlogList(authorId: string, input: GetBlogListInput) {
+
+    const skip = (input.page - 1) * input.size;
+
+    const [blogs, totalBlogs] = await Promise.all([
+        prisma.blog.findMany({
+            where: {
+                authorId: authorId,
+                deletedAt: null,
+            },
+
+            include: {
+                _count: {
+                    select: { likes: true }
+                },
+            },
+
+            skip,
+            take: input.size,
+            orderBy: {
+                createdAt: "desc",
+            },
+        }),
+
+        prisma.blog.count({
+            where: {
+                authorId: authorId,
+                deletedAt: null,
+            },
+        }),
+    ]);
+
+    const formattedBlogs = blogs.map((blog) => ({
+        ...blog,
+        likeCount: blog._count.likes,
+    }));
+
+    const totalPages = Math.ceil(totalBlogs / input.size);
+
+    return {
+        blogs: formattedBlogs,
+        total: totalBlogs,
+        page: input.page,
+        size: input.size,
+        totalPages,
+    };
+}
+
