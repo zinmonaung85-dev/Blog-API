@@ -26,6 +26,7 @@ model User {
   likes     Like[]
   comments  Comment[]
   replies   Reply[]
+  views     View[]
 }
 
 model Blog {
@@ -45,6 +46,7 @@ model Blog {
   favorites   Favorite[]
   likes       Like[]
   comments    Comment[]
+  views       View[]
 
   @@index([authorId])
   @@index([status])
@@ -117,4 +119,20 @@ model Reply {
 
   @@index([userId])
   @@index([commentId])
+}
+
+model View {
+  id String @id @default(cuid())
+
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id])
+  blog Blog @relation(fields: [blogId], references: [id])
+
+  viewAt DateTime
+
+  @@unique([userId, blogId, viewAt])
+  @@index([userId])
+  @@index([blogId])
 }
