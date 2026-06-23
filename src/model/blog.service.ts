@@ -580,3 +580,63 @@ export async function commentsList(blogId: string, input: GetBlogListInput) {
         totalPages: Math.ceil(totalComments / input.size),
     };
 }
+
+
+export async function replyList(blogId: string, commentId: string, input: GetBlogListInput) {
+
+    const skip = (input.page - 1) * input.size;
+
+    const existingComment = await prisma.comment.findUnique({
+        where: { id: commentId },
+        include: {
+            blog: true,
+        },
+    });
+
+    if (!existingComment || existingComment.blogId !== blogId) {
+        throw new ApiError("Comment or Blog match not found", 404);
+    }
+
+    if (existingComment.blog.status !== "PUBLISHED" || existingComment.blog.deletedAt !== null) {
+        throw new ApiError("Cannot view replies as the blog post is unavailable", 400);
+    }
+
+    const [replies, totalReplies] = await Promise.all([
+        prisma.reply.findMany({
+            where: {
+                commentId: commentId,
+            },
+            skip: skip,
+            take: input.size,
+            orderBy: {
+                createdAt: "asc",
+            },
+            select: {
+                id: true,
+                content: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        id: true,
+                        firstname: true,
+                        lastname: true,
+                    }
+                }
+            }
+        }),
+
+        prisma.reply.count({
+            where: {
+                commentId: commentId,
+            },
+        }),
+    ]);
+
+    return {
+        replies,
+        total: totalReplies,
+        page: input.page,
+        size: input.size,
+        totalPages: Math.ceil(totalReplies / input.size),
+    };
+}
