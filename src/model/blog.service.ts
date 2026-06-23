@@ -541,6 +541,7 @@ export async function commentsList(blogId: string, input: GetBlogListInput) {
         prisma.comment.findMany({
             where: {
                 blogId: blogId,
+                deletedAt: null,
             },
             skip: skip,
             take: input.size,
@@ -568,6 +569,7 @@ export async function commentsList(blogId: string, input: GetBlogListInput) {
         prisma.comment.count({
             where: {
                 blogId: blogId,
+                deletedAt: null,
             },
         }),
     ]);
@@ -587,7 +589,9 @@ export async function replyList(blogId: string, commentId: string, input: GetBlo
     const skip = (input.page - 1) * input.size;
 
     const existingComment = await prisma.comment.findUnique({
-        where: { id: commentId },
+        where: {
+            id: commentId,
+        },
         include: {
             blog: true,
         },
@@ -605,6 +609,7 @@ export async function replyList(blogId: string, commentId: string, input: GetBlo
         prisma.reply.findMany({
             where: {
                 commentId: commentId,
+                deletedAt: null,
             },
             skip: skip,
             take: input.size,
@@ -628,6 +633,7 @@ export async function replyList(blogId: string, commentId: string, input: GetBlo
         prisma.reply.count({
             where: {
                 commentId: commentId,
+                deletedAt: null,
             },
         }),
     ]);
