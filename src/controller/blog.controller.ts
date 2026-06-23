@@ -484,6 +484,44 @@ export async function replyList(req: AuthenticatedRequest, res: Response): Promi
 }
 
 
+export async function viewBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const blogId = req.params.id;
+
+        const userId = req.user?.id;
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog post not found to view!.",
+            });
+        }
+
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        const savedBlog = await blogService.viewBlog(blogId as string, userId);
+
+        return res.status(201).json({
+            message: "Viewed blog post successfully!!!",
+            data: savedBlog,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+
+
 
 
 

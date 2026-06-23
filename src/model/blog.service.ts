@@ -652,3 +652,37 @@ export async function replyList(blogId: string, commentId: string, input: GetBlo
         totalPages: Math.ceil(totalReplies / input.size),
     };
 }
+
+
+export async function viewBlog(blogId: string, userId: string) {
+
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog || existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog post not found", 404);
+    }
+
+    const views = await prisma.view.upsert({
+        where: {
+            blogId_viewedAt_userId: {
+                blogId: blogId,
+                viewedAt: today,
+                userId: userId,
+            },
+        },
+
+        create: {
+            blogId: blogId,
+            viewedAt: today,
+            userId: userId,
+        },
+        update: {},
+    });
+
+    return views;
+}
