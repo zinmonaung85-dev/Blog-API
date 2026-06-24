@@ -542,6 +542,30 @@ export async function ownBlogList(req: AuthenticatedRequest, res: Response): Pro
     }
 }
 
+export async function stats(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const userId = req.user?.id;
+
+        const blogId = req.params.id;
+
+        const statistics = await blogService.stats(userId as string, blogId as string);
+
+        return res.status(200).json({
+            success: true,
+            message: "Blog statistics fetched successfully",
+            data: statistics,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+
+
 
 
 

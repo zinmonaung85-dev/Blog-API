@@ -8,6 +8,7 @@ import { CreateCommentInput } from "../dtos/create-comment-api.dto";
 import { CreateReplyInput } from "../dtos/create-reply-api.dto";
 
 import { prisma } from "../lib/prisma";
+import { title } from "process";
 
 
 
@@ -736,3 +737,63 @@ export async function ownBlogList(authorId: string, input: GetBlogListInput) {
     };
 }
 
+
+export async function stats(userId: string, blogId: string) {
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: {
+            id: blogId,
+            deletedAt: null
+        },
+        include: {
+            _count: {
+                select: {
+                    likes: true,
+                    views: true,
+                },
+            },
+        },
+    });
+
+    if (!existingBlog) {
+        throw new ApiError("Blog post not found to view statistics", 404);
+    }
+
+    if (existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Cannot view statistics for this blog post", 404);
+    }
+
+    if (existingBlog.authorId !== userId) {
+        throw new ApiError("Author of blog post and current user does not match", 403);
+    }
+
+    const activeCommentsCount = await prisma.comment.count({
+        where: {
+            blogId: blogId,
+            deletedAt: null
+        }
+    });
+
+    const activeRepliesCount = await prisma.reply.count({
+        where: {
+            comment: {
+                blogId: blogId
+            },
+            deletedAt: null
+        }
+    });
+
+    return {
+        blogId: existingBlog.id,
+        authorId: existingBlog.authorId,
+        title: existingBlog.title,
+        statistics: {
+            likesCount: existingBlog._count.likes,
+            commentsCount: activeCommentsCount + activeRepliesCount,
+            viewsCount: existingBlog._count.views,
+        }
+    };
+}
