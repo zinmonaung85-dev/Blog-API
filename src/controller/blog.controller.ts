@@ -7,6 +7,7 @@ import { UpdateBlogDto } from '../dtos/update-blog-api.dto';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { CreateCommentDto } from '../dtos/create-comment-api.dto';
 import { CreateReplyDto } from '../dtos/create-reply-api.dto';
+import { GetEngagementStatsDto } from '../dtos/get-engagement-stats-api.dto';
 
 
 
@@ -542,6 +543,7 @@ export async function ownBlogList(req: AuthenticatedRequest, res: Response): Pro
     }
 }
 
+
 export async function stats(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
     try {
@@ -562,6 +564,7 @@ export async function stats(req: AuthenticatedRequest, res: Response): Promise<v
         handleErrors(res, err);
     }
 }
+
 
 export async function read(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
@@ -591,6 +594,29 @@ export async function read(req: AuthenticatedRequest, res: Response): Promise<vo
         return res.status(201).json({
             message: "Marked blog post as read successfully!!!",
             data: markedAsRead,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+export async function engagement(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+    try {
+
+        const blogId = req.params.id;
+
+        const userId = req.user?.id;
+
+        const date = req.body;
+
+        const input = GetEngagementStatsDto.parse(date);
+
+        const viewRecords = await blogService.engagement(blogId as string, userId as string, input);
+
+        return res.status(200).json({
+            message: "View records fetched successfully!!!",
+            data: viewRecords,
         });
 
     } catch (err) {

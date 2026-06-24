@@ -30,6 +30,7 @@ router.post("/:id", authMiddleware, blogController.viewBlog);
 router.get("/own", authMiddleware, blogController.ownBlogList);
 router.get("/:id/stats", authMiddleware, blogController.stats);
 router.post("/:id/read", authMiddleware, blogController.read);
+router.post("/:id/stats/engagement", authMiddleware, blogController.engagement);
 
 
 export { router as blogRoute };

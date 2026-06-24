@@ -6,6 +6,7 @@ import { GetBlogListInput } from "../dtos/get-blog-list-api.dto";
 import { UpdateBlogInput } from "../dtos/update-blog-api.dto";
 import { CreateCommentInput } from "../dtos/create-comment-api.dto";
 import { CreateReplyInput } from "../dtos/create-reply-api.dto";
+import { GetEngagementStatsInput } from "../dtos/get-engagement-stats-api.dto";
 
 import { prisma } from "../lib/prisma";
 import { title } from "process";
@@ -14,10 +15,6 @@ import { title } from "process";
 
 
 export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
-
-    console.log(authorId);
-
-    console.log("Cover image =", coverImage);
 
     if (!authorId) {
         throw new ApiError("Author not found", 400);
@@ -847,3 +844,63 @@ export async function read(blogId: string, userId: string) {
 
     return markedAsRead;
 }
+
+export async function engagement(blogId: string, userId: string, input: GetEngagementStatsInput) {
+
+
+    if (!userId) {
+        throw new ApiError("User not found", 401);
+    }
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog || existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog post not found", 404);
+    }
+
+    if (existingBlog.authorId !== userId) {
+        throw new ApiError("You do not have permission to view engagement statistics for this blog", 403);
+    }
+
+    if (!input) {
+        throw new ApiError("Date input is required", 404);
+    }
+
+    const inputDate = new Date(input.date);
+
+    if (isNaN(inputDate.getTime())) {
+        throw new ApiError("Invalid date format. Use YYYY-MM-DD", 400);
+    }
+
+    const startDate = new Date(Date.UTC(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), 1));
+
+    const endDate = new Date(Date.UTC(inputDate.getUTCFullYear(), inputDate.getUTCMonth() + 1, 1));
+
+    const viewRecords = await prisma.view.findMany({
+        where: {
+            blogId: blogId,
+            viewedAt: {
+                gte: startDate,
+                lt: endDate,
+            },
+        },
+        select: {
+            viewedAt: true,
+            isRead: true,
+        },
+        orderBy: {
+            viewedAt: "asc",
+        },
+    });
+
+    return {
+        blogId: existingBlog.id,
+        title: existingBlog.title,
+        period: `${startDate} to ${endDate}`,
+        views: viewRecords,
+        totalViewRecords: viewRecords.length,
+    };
+}
+
