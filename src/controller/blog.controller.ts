@@ -563,6 +563,41 @@ export async function stats(req: AuthenticatedRequest, res: Response): Promise<v
     }
 }
 
+export async function read(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const blogId = req.params.id;
+
+        const userId = req.user?.id;
+
+        if (!blogId) {
+            return res.status(401).json({
+                success: false,
+                message: "Blog post not found to mark as read!.",
+            });
+        }
+
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!.",
+            });
+        }
+
+        const markedAsRead = await blogService.read(blogId as string, userId);
+
+        return res.status(201).json({
+            message: "Marked blog post as read successfully!!!",
+            data: markedAsRead,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
 
 
 

@@ -797,3 +797,53 @@ export async function stats(userId: string, blogId: string) {
         }
     };
 }
+
+
+export async function read(blogId: string, userId: string) {
+
+
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    const existingBlog = await prisma.blog.findUnique({
+        where: { id: blogId },
+    });
+
+    if (!existingBlog || existingBlog.status !== "PUBLISHED" || existingBlog.deletedAt !== null) {
+        throw new ApiError("Blog post not found", 404);
+    }
+
+    const alreadyViewedBlog = await prisma.view.findUnique({
+        where: {
+            blogId_viewedAt_userId: {
+                blogId: blogId,
+                viewedAt: today,
+                userId: userId,
+
+            },
+        },
+    });
+
+    if (!alreadyViewedBlog) {
+        throw new ApiError("Please you must view blog post first!", 404);
+    }
+
+    if (alreadyViewedBlog.isRead !== false) {
+        throw new ApiError("Blog post has already been marked as read", 400);
+    }
+
+    const markedAsRead = await prisma.view.update({
+        where: {
+            blogId_viewedAt_userId: {
+                blogId: blogId,
+                viewedAt: today,
+                userId: userId,
+            },
+        },
+        data: {
+            isRead: true,
+        },
+    });
+
+    return markedAsRead;
+}
