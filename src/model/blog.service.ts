@@ -666,7 +666,7 @@ export async function viewBlog(blogId: string, userId: string) {
     }
 
     if (existingBlog.authorId === userId) {
-        return { message: "Author view not counted" };
+        return { message: "Blog view successfully fetched!!" };
     }
 
     const views = await prisma.view.upsert({
@@ -686,7 +686,7 @@ export async function viewBlog(blogId: string, userId: string) {
         update: {},
     });
 
-    return views;
+    return { message: "Blog view successfully fetched!!" };
 }
 
 
