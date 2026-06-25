@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { userRoute } from "./controller/user.route";
 import { blogRoute } from "./controller/blog.route";
+import { categoryRoute } from "./controller/category.route";
 
 //import { prisma } from "./lib/prisma";  //inserting with prisma
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/users", userRoute);
 app.use("/blogs", blogRoute);
+app.use("/categories", categoryRoute);
 
 
 app.listen(Number(PORT), async () => {

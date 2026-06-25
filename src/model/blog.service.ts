@@ -9,9 +9,6 @@ import { CreateReplyInput } from "../dtos/create-reply-api.dto";
 import { GetEngagementStatsInput } from "../dtos/get-engagement-stats-api.dto";
 
 import { prisma } from "../lib/prisma";
-import { title } from "process";
-
-
 
 
 export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
