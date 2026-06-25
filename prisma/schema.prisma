@@ -44,9 +44,6 @@ model Blog {
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
-
   title       String
   slug        String     @unique
   content     String     @db.Text
@@ -58,13 +55,13 @@ model Blog {
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
 
-  favorites Favorite[]
-  likes     Like[]
-  comments  Comment[]
-  views     View[]
+  favorites  Favorite[]
+  likes      Like[]
+  comments   Comment[]
+  views      View[]
+  categories Category[]
 
   @@index([authorId])
-  @@index([categoryId])
   @@index([status])
 }
 
