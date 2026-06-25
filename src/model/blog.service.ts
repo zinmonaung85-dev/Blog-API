@@ -665,6 +665,10 @@ export async function viewBlog(blogId: string, userId: string) {
         throw new ApiError("Blog post not found", 404);
     }
 
+    if (existingBlog.authorId === userId) {
+        return { message: "Author view not counted" };
+    }
+
     const views = await prisma.view.upsert({
         where: {
             blogId_viewedAt_userId: {

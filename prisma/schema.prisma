@@ -29,10 +29,24 @@ model User {
   views     View[]
 }
 
+model Category {
+  id   String @id @default(cuid())
+  name String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blogs Blog[]
+}
+
 model Blog {
-  id          String     @id @default(cuid())
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id])
+  id       String @id @default(cuid())
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
   title       String
   slug        String     @unique
   content     String     @db.Text
@@ -43,12 +57,14 @@ model Blog {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
-  favorites   Favorite[]
-  likes       Like[]
-  comments    Comment[]
-  views       View[]
+
+  favorites Favorite[]
+  likes     Like[]
+  comments  Comment[]
+  views     View[]
 
   @@index([authorId])
+  @@index([categoryId])
   @@index([status])
 }
 
