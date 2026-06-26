@@ -7,8 +7,10 @@ import { UpdateBlogInput } from "../dtos/update-blog-api.dto";
 import { CreateCommentInput } from "../dtos/create-comment-api.dto";
 import { CreateReplyInput } from "../dtos/create-reply-api.dto";
 import { GetEngagementStatsInput } from "../dtos/get-engagement-stats-api.dto";
+import { GetBlogListByCategoryInput } from "../dtos/get-blog-list-by-category.dto";
 
 import { prisma } from "../lib/prisma";
+import { Prisma } from "@prisma/client";
 
 
 export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
@@ -26,16 +28,34 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
             content: blogData.content,
             excerpt: blogData.excerpt ?? null,
             coverImage,
-            status: blogData.status ?? 'DRAFT',
-            slug: slug,
-            authorId: authorId,
+            status: blogData.status,
+            slug,
+            authorId,
             publishedAt: blogData.status === "PUBLISHED" ? new Date() : null,
+
+            categories:
+                blogData.categoryIds?.length
+                    ? {
+                        connect: blogData.categoryIds.map(id => ({
+                            id,
+                        })),
+                    } : undefined,
+        },
+
+        include: {
+            categories: {
+                select: {
+                    id: true,
+                    name: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            },
         },
     });
 
     return newBlog;
-};
-
+}
 
 export async function publishBlog(blogId: string, authorId: string): Promise<Blog> {
 
@@ -72,62 +92,86 @@ export async function publishBlog(blogId: string, authorId: string): Promise<Blo
 }
 
 
-export async function getBlogList(authorId: string, input: GetBlogListInput) {
-
+export async function getBlogList(authorId: string, input: GetBlogListByCategoryInput) {
 
     const skip = (input.page - 1) * input.size;
 
+    const where: Prisma.BlogWhereInput = {
+        status: "PUBLISHED",
+        deletedAt: null,
+
+        authorId: {
+            not: authorId,
+        },
+    };
+
+    if (input.categoryId) {
+        where.categories = {
+            some: {
+                id: input.categoryId,
+            },
+        };
+    }
+
     const [blogs, totalBlogs] = await Promise.all([
         prisma.blog.findMany({
-            where: {
-                status: "PUBLISHED",
-                deletedAt: null,
-                authorId: {
-                    not: authorId,
-                }
-            },
+            where,
 
             include: {
+                author: {
+                    select: {
+                        id: true,
+                        firstname: true,
+                        lastname: true,
+                        email: true,
+                    },
+                },
+
+                categories: {
+                    select: {
+                        id: true,
+                        name: true,
+                        createdAt: true,
+                    },
+                },
+
                 _count: {
-                    select: { likes: true }
+                    select: {
+                        likes: true,
+                        comments: true,
+                    },
                 },
             },
 
             skip,
             take: input.size,
+
             orderBy: {
                 createdAt: "desc",
             },
         }),
 
         prisma.blog.count({
-            where: {
-                status: "PUBLISHED",
-                deletedAt: null,
-                authorId: {
-                    not: authorId,
-                }
-            },
+            where,
         }),
     ]);
 
-    const formattedBlogs = blogs.map((blog) => ({
-        ...blog,
-        likeCount: blog._count.likes,
-    }));
-
-    const totalPages = Math.ceil(totalBlogs / input.size);
+    const formattedBlogs = blogs.map(
+        ({ _count, ...blog }) => ({
+            ...blog,
+            likeCount: _count.likes,
+            commentCount: _count.comments,
+        })
+    );
 
     return {
         blogs: formattedBlogs,
         total: totalBlogs,
         page: input.page,
         size: input.size,
-        totalPages,
+        totalPages: Math.ceil(totalBlogs / input.size),
     };
 }
-
-
 
 export async function updateBlog(authorId: string, blogId: string, blogData: UpdateBlogInput, coverImage?: string): Promise<Blog> {
 

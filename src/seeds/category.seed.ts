@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 async function main() {
 
     console.log(" Starting up database seeding...");
+
     await prisma.category.createMany({
         data: [
             { name: "Technology" },

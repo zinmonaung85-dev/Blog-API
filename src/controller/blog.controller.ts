@@ -8,17 +8,11 @@ import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { CreateCommentDto } from '../dtos/create-comment-api.dto';
 import { CreateReplyDto } from '../dtos/create-reply-api.dto';
 import { GetEngagementStatsDto } from '../dtos/get-engagement-stats-api.dto';
-
+import { GetBlogListByCategoryDto } from '../dtos/get-blog-list-by-category.dto';
 
 
 export async function createBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
     try {
-        const body = req.body;
-
-        const input = CreateBlogDto.parse(body);
-
-        console.log(input);
-
         const authorId = req.user?.id;
 
         if (!authorId) {
@@ -28,23 +22,20 @@ export async function createBlog(req: AuthenticatedRequest, res: Response): Prom
             });
         }
 
-        const coverImage = req.file?.filename;
+        if (typeof req.body.categoryIds === "string") {
+            req.body.categoryIds = [req.body.categoryIds];
+        }
 
-        console.log(coverImage);
+        const input = CreateBlogDto.parse(req.body);
+
+        const coverImage = req.file?.filename;
 
 
         const newBlog = await blogService.createBlog(authorId, input, coverImage);
 
         return res.status(201).json({
             success: true,
-            blogInfo: {
-                id: newBlog.id,
-                title: newBlog.title,
-                content: newBlog.content,
-                excerpt: newBlog.excerpt,
-                coverImage: newBlog.coverImage,
-                status: newBlog.status,
-            },
+            data: newBlog,
             message: "Blog post created successfully!",
         });
     } catch (err) {
@@ -100,7 +91,8 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
         const authorId = req.user?.id;
 
         const body = req.body;
-        const input = GetBlogListDto.parse(body);
+
+        const input = GetBlogListByCategoryDto.parse(body);
 
         const result = await blogService.getBlogList(authorId as string, input);
 
@@ -114,6 +106,7 @@ export async function getBlogList(req: AuthenticatedRequest, res: Response): Pro
         handleErrors(res, err);
     }
 }
+
 
 export async function updateBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
 
