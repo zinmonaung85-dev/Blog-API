@@ -3,32 +3,40 @@ import dotenv from "dotenv";
 import { userRoute } from "./controller/user.route";
 import { blogRoute } from "./controller/blog.route";
 import { categoryRoute } from "./controller/category.route";
+import { blogLogRoute } from "./controller/blog.log.route";
 
-//import { prisma } from "./lib/prisma";  //inserting with prisma
-
+// Middlewares
+import { requestId } from "./middlewares/requestId.middleware";
+import { requestLogger } from "./middlewares/request-logger.middleware";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 dotenv.config();
 
 const PORT = process.env.PORT;
-
 if (!PORT) {
-    console.error("PORT is not provided .");
+    console.error("PORT is not provided.");
     process.exit(1);
 }
 
 const app = express();
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestId);
+app.use(requestLogger);
+
 
 app.use("/users", userRoute);
 app.use("/blogs", blogRoute);
 app.use("/categories", categoryRoute);
 
+app.use("/blogs", blogLogRoute);
+
+app.use(errorHandler);
 
 app.listen(Number(PORT), async () => {
     console.log(`✅ Express server running at http://localhost:${PORT}`);
-
-    //await register(); //for insreting with prisma
 });
 
 
