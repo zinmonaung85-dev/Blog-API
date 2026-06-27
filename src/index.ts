@@ -3,12 +3,10 @@ import dotenv from "dotenv";
 import { userRoute } from "./controller/user.route";
 import { blogRoute } from "./controller/blog.route";
 import { categoryRoute } from "./controller/category.route";
-import { blogLogRoute } from "./controller/blog.log.route";
 
 // Middlewares
 import { requestId } from "./middlewares/requestId.middleware";
 import { requestLogger } from "./middlewares/request-logger.middleware";
-import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 dotenv.config();
 
@@ -31,9 +29,6 @@ app.use("/users", userRoute);
 app.use("/blogs", blogRoute);
 app.use("/categories", categoryRoute);
 
-app.use("/blogs", blogLogRoute);
-
-app.use(errorHandler);
 
 app.listen(Number(PORT), async () => {
     console.log(`✅ Express server running at http://localhost:${PORT}`);

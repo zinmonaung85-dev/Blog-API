@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 import { verifyAccessToken } from "../model/jwt";
 import { ApiError } from "../controller/api-error";
+import { logger } from "../lib/logger";
 
 
 export interface AuthenticatedRequest extends Request {
@@ -56,7 +57,7 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
             return res.status(401).json({ message: "Invalid or expired token" });
         }
 
-        console.error(err);
+        logger.error(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 }

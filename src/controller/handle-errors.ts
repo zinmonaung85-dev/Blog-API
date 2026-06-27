@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { ApiError } from "./api-error";
 import z from "zod";
+import { logger } from "../lib/logger";
 
 function handleErrors(res: Response, err: unknown) {
 
@@ -15,7 +16,7 @@ function handleErrors(res: Response, err: unknown) {
         return res.status(400).json({ message: `Invalid data in fields: ${fields}`, });
     }
 
-    console.error(err);
+    logger.error(err);
 
     const errorMessage = err instanceof Error ? err.message : "Internal server error";
 
