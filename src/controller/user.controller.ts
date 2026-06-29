@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { RegisterDto } from "../dtos/register-dto";
 import { LoginDto } from "../dtos/login-api.dto";
+import { SearchUsersDto } from '../dtos/search-users-api.dto';
 import { RefreshAccessTokenDto } from "../dtos/refresh-access-token.dto";
 import * as userService from "../model/user.service";
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { handleErrors } from "./handle-errors";
+import { Result } from 'pg';
+import { GetBlogListDto } from '../dtos/get-blog-list-api.dto';
 
 
 export async function register(req: Request, res: Response): Promise<void | Response> {
@@ -67,20 +71,17 @@ export async function refreshAccessToken(req: Request, res: Response): Promise<v
 }
 
 
-
-interface AuthenticatedRequest extends Request {
-    user: { id: string };
-}
-
-export async function getMe(req: Request, res: Response): Promise<void | Response> {
+export async function getMe(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
     try {
 
-        const authReq = req as AuthenticatedRequest;
 
-        const userId = authReq.user.id;
+        const userId = req.user?.id;
 
-        console.log("Retrieved userId from middleware:", userId);
-
+        if (!userId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
         const user = await userService.getMe(userId);
 
         return res.status(200).json({
@@ -91,6 +92,169 @@ export async function getMe(req: Request, res: Response): Promise<void | Respons
                 email: user.email,
             },
             message: "Retrieved user information successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function searchUsers(req: AuthenticatedRequest, res: Response) {
+    try {
+        const currentUserId = req.user?.id;
+
+        const input = SearchUsersDto.parse(req.body);
+
+        if (!currentUserId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+
+        const user = await userService.searchUsers(currentUserId, input);
+
+        return res.status(200).json({
+            data: user,
+            message: "Searched users successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function followUser(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const followerId = req.user?.id;
+
+        const followingId = req.params.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Follower not found!.",
+            });
+        }
+
+        if (!followingId) {
+            return res.status(401).json({
+                success: false,
+                message: "Following user not found!.",
+            });
+        }
+
+        const user = await userService.followUser(followerId, followingId as string);
+
+        return res.status(201).json({
+            message: "Followed successfully!!!",
+            data: user,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function unfollowUser(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const followerId = req.user?.id;
+
+        const followingId = req.params.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Follower not found!.",
+            });
+        }
+
+        if (!followingId) {
+            return res.status(401).json({
+                success: false,
+                message: "Following user not found!.",
+            });
+        }
+
+        const deletedFollow = await userService.unfollowUser(followerId, followingId as string);
+
+        return res.status(200).json({
+            message: "Unfollowed successfully!!!",
+            data: deletedFollow,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function getFollowersList(req: AuthenticatedRequest, res: Response) {
+
+    try {
+        const followerId = req.user?.id;
+
+        const followingId = req.params.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Follower not found!.",
+            });
+        }
+
+        if (!followingId) {
+            return res.status(401).json({
+                success: false,
+                message: "Following user not found!.",
+            });
+        }
+        const input = GetBlogListDto.parse(req.body);
+
+        const followers = await userService.getFollowersList(followerId, followingId as string, input);
+
+        return res.status(200).json({
+            data: followers,
+            message: "Followers list fetched successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+export async function getFollowingList(req: AuthenticatedRequest, res: Response) {
+
+    try {
+
+        const followerId = req.params.id;
+
+        const currentUserId = req.user?.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Follower not found!.",
+            });
+        }
+
+        if (!currentUserId) {
+            return res.status(401).json({
+                success: false,
+                message: "Current user not found!.",
+            });
+        }
+        const input = GetBlogListDto.parse(req.body);
+
+        const following = await userService.getFollowingList(followerId as string, currentUserId, input);
+
+        return res.status(200).json({
+            data: following,
+            message: "Following list fetched successfully!",
         });
     } catch (err) {
         handleErrors(res, err);
