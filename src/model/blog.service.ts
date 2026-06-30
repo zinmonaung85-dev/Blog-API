@@ -17,7 +17,6 @@ import { Prisma } from "@prisma/client";
 export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
 
     const random4Digit = Math.floor(1000 + Math.random() * 9000);
-
     const slug = `${random4Digit}-${Date.now()}`;
 
     const newBlog = await prisma.blog.create({
@@ -29,16 +28,18 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
             status: blogData.status,
             slug,
             authorId,
-            publishedAt: blogData.status === "PUBLISHED" ? new Date() : null,
+            publishedAt:
+                blogData.status === "PUBLISHED"
+                    ? new Date()
+                    : null,
 
-            categories:
-                blogData.categoryIds?.length
-                    ? {
-                        connect: blogData.categoryIds.map(id => ({
-                            id,
-                        })),
-                    }
-                    : undefined,
+            categories: blogData.categoryIds?.length
+                ? {
+                    connect: blogData.categoryIds.map(id => ({
+                        id,
+                    })),
+                }
+                : undefined,
         },
 
         include: {
@@ -67,19 +68,25 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
             where: {
                 followingId: authorId,
             },
-            include: {
-                follower: true,
+            select: {
+                follower: {
+                    select: {
+                        email: true,
+                    },
+                },
             },
         });
 
-        for (const follow of followers) {
-            await sendMail(
-                follow.follower.email,
-                `${newBlog.author.firstname} ${newBlog.author.lastname}`,
-                newBlog.title,
-                newBlog.slug
-            );
-        }
+        await Promise.all(
+            followers.map((follow) =>
+                sendMail(
+                    follow.follower.email,
+                    `${newBlog.author.firstname} ${newBlog.author.lastname}`,
+                    newBlog.title,
+                    newBlog.slug
+                )
+            )
+        );
     }
 
     return newBlog;
@@ -88,7 +95,18 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
 export async function publishBlog(blogId: string, authorId: string): Promise<Blog> {
 
     const existingBlog = await prisma.blog.findUnique({
-        where: { id: blogId },
+        where: {
+            id: blogId,
+        },
+        include: {
+            author: {
+                select: {
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                },
+            },
+        },
     });
 
     if (!existingBlog) {
@@ -100,19 +118,44 @@ export async function publishBlog(blogId: string, authorId: string): Promise<Blo
     }
 
     if (existingBlog.status === "PUBLISHED") {
-        throw new ApiError("This blog has already been published!!", 400);
+        throw new ApiError("This blog has already been published", 400);
     }
 
     const updatedBlog = await prisma.blog.update({
-        where: { id: blogId },
+        where: {
+            id: blogId,
+        },
         data: {
             status: "PUBLISHED",
             publishedAt: new Date(),
         },
     });
 
-    return updatedBlog;
+    const followers = await prisma.follow.findMany({
+        where: {
+            followingId: authorId,
+        },
+        select: {
+            follower: {
+                select: {
+                    email: true,
+                },
+            },
+        },
+    });
 
+    await Promise.all(
+        followers.map((follow) =>
+            sendMail(
+                follow.follower.email,
+                `${existingBlog.author.firstname} ${existingBlog.author.lastname}`,
+                existingBlog.title,
+                existingBlog.slug
+            )
+        )
+    );
+
+    return updatedBlog;
 }
 
 
