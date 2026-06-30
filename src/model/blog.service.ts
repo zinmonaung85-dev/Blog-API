@@ -9,6 +9,7 @@ import { CreateReplyInput } from "../dtos/create-reply-api.dto";
 import { GetEngagementStatsInput } from "../dtos/get-engagement-stats-api.dto";
 import { GetBlogListByCategoryInput } from "../dtos/get-blog-list-by-category.dto";
 
+import { sendMail } from "../model/mail.service";
 import { prisma } from "../lib/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -16,6 +17,7 @@ import { Prisma } from "@prisma/client";
 export async function createBlog(authorId: string, blogData: CreateBlogInput, coverImage?: string): Promise<Blog> {
 
     const random4Digit = Math.floor(1000 + Math.random() * 9000);
+
     const slug = `${random4Digit}-${Date.now()}`;
 
     const newBlog = await prisma.blog.create({
@@ -35,10 +37,19 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
                         connect: blogData.categoryIds.map(id => ({
                             id,
                         })),
-                    } : undefined,
+                    }
+                    : undefined,
         },
 
         include: {
+            author: {
+                select: {
+                    id: true,
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                },
+            },
             categories: {
                 select: {
                     id: true,
@@ -49,6 +60,27 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
             },
         },
     });
+
+    if (newBlog.status === "PUBLISHED") {
+
+        const followers = await prisma.follow.findMany({
+            where: {
+                followingId: authorId,
+            },
+            include: {
+                follower: true,
+            },
+        });
+
+        for (const follow of followers) {
+            await sendMail(
+                follow.follower.email,
+                `${newBlog.author.firstname} ${newBlog.author.lastname}`,
+                newBlog.title,
+                newBlog.slug
+            );
+        }
+    }
 
     return newBlog;
 }
