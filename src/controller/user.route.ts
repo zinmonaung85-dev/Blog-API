@@ -12,7 +12,7 @@ router.get("/me", authMiddleware, userController.getMe);
 
 router.get("/search", authMiddleware, userController.searchUsers);
 router.post("/:id/follow", authMiddleware, userController.followUser);
-router.delete("/:id", authMiddleware, userController.unfollowUser);
+router.delete("/:id/unfollow", authMiddleware, userController.unfollowUser);
 router.get("/:id/followers", authMiddleware, userController.getFollowersList);
 router.get("/:id/following", authMiddleware, userController.getFollowingList);
 

@@ -347,7 +347,6 @@ export async function getFollowersList(followerId: string, followingId: string, 
                 email: followRow.follower.email,
                 followersCount: followRow.follower._count.followers,
                 followingCount: followRow.follower._count.following,
-                isFollowed: isMe ? false : followRow.follower.followers.length > 0,
                 isMe,
             };
         }),
@@ -417,7 +416,6 @@ export async function getFollowingList(followerId: string, currentUserId: string
                 email: followRow.following.email,
                 followersCount: followRow.following._count.followers,
                 followingCount: followRow.following._count.following,
-                isFollowed: isMe ? false : followRow.following.followers.length > 0,
                 isMe: isMe,
             };
         }),
