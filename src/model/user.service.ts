@@ -427,3 +427,76 @@ export async function getFollowingList(followerId: string, currentUserId: string
         }
     };
 }
+
+
+export async function subscribeToUser(followerId: string, followingId: string) {
+
+    if (followerId === followingId) {
+        throw new ApiError("You cannot subscribe yourself!", 400);
+    }
+
+    const subscription = await prisma.follow.upsert({
+        where: {
+            followerId_followingId: {
+                followerId,
+                followingId,
+            },
+        },
+
+        update: {
+            isSubscribed: true,
+        },
+
+        create: {
+            followerId,
+            followingId,
+            isSubscribed: true,
+        },
+    });
+
+    return subscription;
+
+}
+
+
+export async function unsubscribeFromUser(followerId: string, followingId: string) {
+
+    if (followerId === followingId) {
+        throw new ApiError("You cannot unsubscribe from yourself!", 400);
+    }
+
+    const followingUser = await prisma.user.findUnique({
+        where: { id: followingId }
+    });
+
+    if (!followingUser) {
+        throw new ApiError("Cannot unsubscribe from this user cuz user not found", 404);
+    }
+
+    const existingFollow = await prisma.follow.findUnique({
+        where: {
+            followerId_followingId: {
+                followerId,
+                followingId,
+            }
+        }
+    });
+
+    if (!existingFollow || !existingFollow.isSubscribed) {
+        throw new ApiError("You are not subscribed to this user!", 400);
+    }
+
+    const unsubscribed = await prisma.follow.update({
+        where: {
+            followerId_followingId: {
+                followerId,
+                followingId,
+            },
+        },
+        data: {
+            isSubscribed: false,
+        },
+    });
+
+    return unsubscribed;
+}

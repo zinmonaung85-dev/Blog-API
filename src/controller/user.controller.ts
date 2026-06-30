@@ -260,3 +260,73 @@ export async function getFollowingList(req: AuthenticatedRequest, res: Response)
         handleErrors(res, err);
     }
 }
+
+
+export async function subscribeToUser(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const followerId = req.user?.id;
+
+        const followingId = req.params.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Subscriber not found!.",
+            });
+        }
+
+        if (!followingId) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found!.",
+            });
+        }
+
+        const subscription = await userService.subscribeToUser(followerId, followingId as string);
+
+        return res.status(201).json({
+            message: "Subscribed successfully!!!",
+            data: subscription,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+export async function unsubscribeFromUser(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
+
+    try {
+
+        const followerId = req.user?.id;
+
+        const followingId = req.params.id;
+
+        if (!followerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Subscriber not found!.",
+            });
+        }
+
+        if (!followingId) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found!.",
+            });
+        }
+
+        const unsubscribed = await userService.unsubscribeFromUser(followerId, followingId as string);
+
+        return res.status(201).json({
+            message: "Unsubscribed successfully!!!",
+            data: unsubscribed,
+        });
+
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
