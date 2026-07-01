@@ -9,6 +9,9 @@ import { CreateCommentDto } from '../dtos/create-comment-api.dto';
 import { CreateReplyDto } from '../dtos/create-reply-api.dto';
 import { GetEngagementStatsDto } from '../dtos/get-engagement-stats-api.dto';
 import { GetBlogListByCategoryDto } from '../dtos/get-blog-list-by-category.dto';
+import { SearchUsersDto } from '../dtos/search-users-api.dto';
+
+
 
 
 export async function createBlog(req: AuthenticatedRequest, res: Response): Promise<void | Response> {
@@ -616,6 +619,32 @@ export async function engagement(req: AuthenticatedRequest, res: Response): Prom
         handleErrors(res, err);
     }
 }
+
+
+export async function searchBlogs(req: AuthenticatedRequest, res: Response) {
+    try {
+        const currentUserId = req.user?.id;
+
+        const input = SearchUsersDto.parse(req.body);
+
+        if (!currentUserId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+
+        const blogs = await blogService.searchBlogs(currentUserId, input);
+
+        return res.status(200).json({
+            data: blogs,
+            message: "Searched blogs successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
 
 
 
