@@ -330,3 +330,42 @@ export async function unsubscribeFromUser(req: AuthenticatedRequest, res: Respon
         handleErrors(res, err);
     }
 }
+
+
+export async function getUserSuggestion(req: AuthenticatedRequest, res: Response) {
+    try {
+        const currentUserId = req.user?.id;
+
+        const input = GetBlogListDto.parse(req.body);
+
+        if (!currentUserId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+
+        const users = await userService.getUserSuggestion(currentUserId, input);
+
+        return res.status(200).json({
+            data: users,
+            message: "Fetched user suggestion successfully!",
+        });
+    } catch (err) {
+        handleErrors(res, err);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

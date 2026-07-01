@@ -502,3 +502,75 @@ export async function unsubscribeFromUser(followerId: string, followingId: strin
 
     return unsubscribed;
 }
+
+
+export async function getUserSuggestion(currentUserId: string, input: GetBlogListInput) {
+
+    const skip = (input.page - 1) * input.size;
+
+    const followingUsers = await prisma.follow.findMany({
+        where: {
+            followerId: currentUserId,
+        },
+        select: {
+            followingId: true,
+        },
+    });
+
+    const followingIds = followingUsers.map((f) => f.followingId);
+
+    const where: Prisma.UserWhereInput = {
+        id: {
+            notIn: [currentUserId, ...followingIds],
+        },
+    };
+
+    const [users, totalUsers] = await Promise.all([
+        prisma.user.findMany({
+            where,
+            skip,
+            take: input.size,
+
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+
+                _count: {
+                    select: {
+                        followers: true,
+                        following: true,
+                    },
+                },
+            },
+
+            orderBy: {
+                followers: {
+                    _count: "desc",
+                },
+            },
+        }),
+
+        prisma.user.count({
+            where,
+        }),
+    ]);
+
+    return {
+        users: users.map((user) => ({
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            followersCount: user._count.followers,
+            followingCount: user._count.following,
+        })),
+        pagination: {
+            total: totalUsers,
+            page: input.page,
+            size: input.size,
+            totalPages: totalUsers > 0 ? Math.ceil(totalUsers / input.size) : 0,
+        },
+    };
+}

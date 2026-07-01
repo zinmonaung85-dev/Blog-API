@@ -18,6 +18,6 @@ router.get("/:id/following", authMiddleware, userController.getFollowingList);
 
 router.post("/:id/subscribe", authMiddleware, userController.subscribeToUser);
 router.patch("/:id/unsubscribe", authMiddleware, userController.unsubscribeFromUser);
-
+router.get("/suggestion", authMiddleware, userController.getUserSuggestion);
 
 export { router as userRoute };

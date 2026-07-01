@@ -981,15 +981,7 @@ export async function searchBlogs(currentUserId: string, input: SearchUsersInput
 
     const where: Prisma.BlogWhereInput = {
         deletedAt: null,
-        OR: [
-            {
-                status: "PUBLISHED"
-            },
-            {
-                authorId: currentUserId,
-                status: "DRAFT"
-            }
-        ]
+        status: "PUBLISHED"
     };
 
     if (input.search) {
