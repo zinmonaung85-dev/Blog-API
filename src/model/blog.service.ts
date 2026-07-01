@@ -67,6 +67,7 @@ export async function createBlog(authorId: string, blogData: CreateBlogInput, co
         const followers = await prisma.follow.findMany({
             where: {
                 followingId: authorId,
+                isSubscribed: true,
             },
             select: {
                 follower: {
@@ -134,6 +135,7 @@ export async function publishBlog(blogId: string, authorId: string): Promise<Blo
     const followers = await prisma.follow.findMany({
         where: {
             followingId: authorId,
+            isSubscribed: true,
         },
         select: {
             follower: {

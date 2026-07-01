@@ -378,14 +378,6 @@ export async function getFollowingList(followerId: string, currentUserId: string
                         lastname: true,
                         email: true,
 
-                        followers: {
-                            where: {
-                                followerId: currentUserId,
-                            },
-                            select: {
-                                id: true,
-                            },
-                        },
                         _count: {
                             select: {
                                 followers: true,
@@ -417,6 +409,7 @@ export async function getFollowingList(followerId: string, currentUserId: string
                 followersCount: followRow.following._count.followers,
                 followingCount: followRow.following._count.following,
                 isMe: isMe,
+                isSubscribed: followRow.isSubscribed,
             };
         }),
         pagination: {
