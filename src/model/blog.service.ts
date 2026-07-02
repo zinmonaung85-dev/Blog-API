@@ -187,7 +187,10 @@ export async function getBlogList(authorId: string, input: GetBlogListByCategory
 
         ...(input.cursor && {
             cursor: {
-                id: input.cursor,
+                createdAt_id: {
+                    createdAt: input.cursor.createdAt,
+                    id: input.cursor.id,
+                },
             },
             skip: 1,
         }),
@@ -228,11 +231,18 @@ export async function getBlogList(authorId: string, input: GetBlogListByCategory
         ],
     });
 
-    let nextCursor: string | null = null;
+    let nextCursor: { id: string; createdAt: Date } | null = null;
 
     if (blogs.length > input.size) {
-        const nextItem = blogs.pop();
-        nextCursor = nextItem!.id;
+        blogs.pop()!;
+
+        const lastItem = blogs[blogs.length - 1];
+        if (lastItem) {
+            nextCursor = {
+                id: lastItem.id,
+                createdAt: lastItem.createdAt,
+            };
+        }
     }
 
     const formattedBlogs = blogs.map(({ _count, ...blog }) => ({
@@ -984,7 +994,6 @@ export async function engagement(blogId: string, userId: string, input: GetEngag
 
 
 export async function searchBlogs(currentUserId: string, input: SearchBlogsInput) {
-
     const where: Prisma.BlogWhereInput = {
         deletedAt: null,
         status: "PUBLISHED",
@@ -1001,9 +1010,13 @@ export async function searchBlogs(currentUserId: string, input: SearchBlogsInput
         where,
 
         take: input.size + 1,
+
         ...(input.cursor && {
             cursor: {
-                id: input.cursor,
+                createdAt_id: {
+                    createdAt: input.cursor.createdAt,
+                    id: input.cursor.id,
+                },
             },
             skip: 1,
         }),
@@ -1043,19 +1056,26 @@ export async function searchBlogs(currentUserId: string, input: SearchBlogsInput
 
         orderBy: [
             {
-                createdAt: "desc"
+                createdAt: "desc",
             },
             {
-                id: "desc"
+                id: "desc",
             },
         ],
     });
 
-    let nextCursor: string | null = null;
+    let nextCursor: { id: string; createdAt: Date } | null = null;
 
     if (blogs.length > input.size) {
-        const nextItem = blogs.pop();
-        nextCursor = nextItem!.id;
+        blogs.pop()!;
+
+        const lastItem = blogs[blogs.length - 1];
+        if (lastItem) {
+            nextCursor = {
+                id: lastItem.id,
+                createdAt: lastItem.createdAt,
+            };
+        }
     }
 
     return {
@@ -1074,7 +1094,6 @@ export async function searchBlogs(currentUserId: string, input: SearchBlogsInput
                     firstname: author.firstname,
                     lastname: author.lastname,
                     email: author.email,
-
                     followersCount: author._count.followers,
                     followingCount: author._count.following,
                     isMe,

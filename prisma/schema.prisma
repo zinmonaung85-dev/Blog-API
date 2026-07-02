@@ -30,6 +30,8 @@ model User {
 
   following Follow[] @relation("FollowerRelation")
   followers Follow[] @relation("FollowingRelation")
+
+  @@index([firstname, lastname, id])
 }
 
 model Follow {
@@ -82,6 +84,7 @@ model Blog {
   views      View[]
   categories Category[]
 
+  @@unique([createdAt, id])
   @@index([authorId])
   @@index([status])
 }
